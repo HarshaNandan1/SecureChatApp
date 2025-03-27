@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat with {{ recipient.name if recipient.name else recipient.email }} - Secure Chat{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card chat-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if recipient.profile_picture %}
+                    <img src="{{ recipient.profile_picture }}" alt="Profile" class="rounded-circle me-3" width="40" height="40">
+                    {% else %}
+                    <div class="avatar bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span>{{ recipient.name[0] if recipient.name else recipient.email[0] }}</span>
+                    </div>
+                    {% endif %}
+                    <h5 class="mb-0">{{ recipient.name if recipient.name else recipient.email }}</h5>
+                </div>
+                <div class="encryption-status">
+                    <span class="badge bg-success" id="encryption-badge">
+                        <i class="fas fa-lock"></i> End-to-End Encrypted
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% else %}
+                <div class="messages-container" id="messages-container">
+                    <div class="text-center text-muted mb-3">
+                        <small>Messages are end-to-end encrypted. No one outside this chat can read them.</small>
+                    </div>
+                    
+                    <div id="messages-list">
+                        <!-- Messages will be loaded here dynamically -->
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message-input mt-3">
+                    <form id="message-form" class="d-flex">
+                        <input type="text" id="message-text" class="form-control" placeholder="Type a message..." required>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for JavaScript -->
+<div id="current-user-id" style="display: none;">{{ current_user.id }}</div>
+<div id="recipient-id" style="display: none;">{{ recipient.id }}</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Encryption JS -->
+<script src="{{ url_for('static', filename='js/encryption.js') }}"></script>
+<!-- Chat JS -->
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const currentUserId = document.getElementById('current-user-id').textContent;
+        const recipientId = document.getElementById('recipient-id').textContent;
+        
+        // Initialize Socket.IO
+        const socket = io();
+        
+        // Initialize chat
+        const chat = new Chat(socket, currentUserId, recipientId);
+        
+        // Check if private key exists
+        if (!localStorage.getItem('privateKey')) {
+            document.getElementById('encryption-badge').classList.remove('bg-success');
+            document.getElementById('encryption-badge').classList.add('bg-danger');
+            document.getElementById('encryption-badge').innerHTML = '<i class="fas fa-unlock-alt"></i> Missing Private Key';
+            
+            // Disable message form
+            const messageForm = document.getElementById('message-form');
+            if (messageForm) {
+                messageForm.querySelector('input').disabled = true;
+                messageForm.querySelector('button').disabled = true;
+                
+                // Add warning
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'alert alert-danger mt-2';
+                warningDiv.innerHTML = 'Your private key is missing. You cannot send or decrypt messages.';
+                messageForm.parentNode.appendChild(warningDiv);
+            }
+        }
+    });
+</script>
+{% endblock %}

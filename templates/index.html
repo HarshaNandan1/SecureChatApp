@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Secure Chat{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    <i class="fas fa-users"></i> Chat Contacts
+                </h4>
+                <div class="encryption-status">
+                    <span class="badge bg-success" id="encryption-badge">
+                        <i class="fas fa-lock"></i> End-to-End Encrypted
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if not current_user.encrypted_public_key %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    You need to generate encryption keys before you can chat securely.
+                    <button class="btn btn-sm btn-outline-primary ms-3" id="generate-keys-btn">Generate Keys</button>
+                </div>
+                {% endif %}
+                
+                <div class="user-list">
+                    {% if users %}
+                        <ul class="list-group">
+                            {% for user in users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture }}" alt="Profile" class="rounded-circle me-3" width="40" height="40">
+                                    {% else %}
+                                    <div class="avatar bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>{{ user.name[0] if user.name else user.email[0] }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ user.name if user.name else user.email }}</h6>
+                                        <small class="text-muted">{{ user.email }}</small>
+                                    </div>
+                                </div>
+                                <a href="{{ url_for('chat.chat', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-comments"></i> Chat
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No users available to chat with.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Encryption JS -->
+<script src="{{ url_for('static', filename='js/encryption.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user has encryption keys
+        const generateKeysBtn = document.getElementById('generate-keys-btn');
+        if (generateKeysBtn) {
+            generateKeysBtn.addEventListener('click', async function() {
+                try {
+                    const encryptionInstance = new EncryptionService();
+                    await encryptionInstance.generateAndStoreKeys();
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Failed to generate keys:', error);
+                    alert('Failed to generate encryption keys. Please try again.');
+                }
+            });
+        }
+
+        // Check if private key exists in local storage
+        if (!localStorage.getItem('privateKey') && '{{ current_user.encrypted_public_key }}' !== 'None') {
+            document.getElementById('encryption-badge').classList.remove('bg-success');
+            document.getElementById('encryption-badge').classList.add('bg-danger');
+            document.getElementById('encryption-badge').innerHTML = '<i class="fas fa-unlock-alt"></i> Missing Private Key';
+        }
+    });
+</script>
+{% endblock %}

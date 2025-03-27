@@ -1,0 +1,13 @@
+email-validator>=2.2.0
+firebase-admin>=6.7.0
+flask-login>=0.6.3
+flask>=3.1.0
+flask-sqlalchemy>=3.1.1
+gunicorn>=23.0.0
+psycopg2-binary>=2.9.10
+python-dotenv>=1.1.0
+pycryptodome>=3.22.0
+sqlalchemy>=2.0.39
+flask-socketio>=5.5.1
+cryptography>=44.0.2
+eventlet>=0.39.1

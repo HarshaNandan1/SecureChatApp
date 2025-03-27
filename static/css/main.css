@@ -1,0 +1,104 @@
+/* Secure Chat Application Styles */
+
+/* Chat container */
+.chat-card {
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-card .card-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Message styles */
+.message {
+    margin-bottom: 10px;
+    max-width: 75%;
+}
+
+.message-outgoing {
+    margin-left: auto;
+    background-color: var(--bs-primary);
+    color: white;
+    border-radius: 15px 0 15px 15px;
+}
+
+.message-incoming {
+    margin-right: auto;
+    background-color: var(--bs-dark);
+    color: white;
+    border-radius: 0 15px 15px 15px;
+}
+
+.message-content {
+    padding: 10px 15px;
+    word-wrap: break-word;
+}
+
+.message-time {
+    font-size: 0.7rem;
+    text-align: right;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* Avatars */
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+/* Encryption badge */
+.encryption-status .badge {
+    font-size: 0.8rem;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chat-card {
+        height: calc(100vh - 170px);
+    }
+    
+    .message {
+        max-width: 85%;
+    }
+}
+
+/* Message Status */
+.message-status {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* User list styles */
+.user-list .list-group-item {
+    transition: background-color 0.2s;
+}
+
+.user-list .list-group-item:hover {
+    background-color: var(--bs-dark);
+}
+
+/* Profile page */
+.profile-section {
+    margin-bottom: 2rem;
+}

@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Secure Chat{% endblock %}
+
+{% block head %}
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<!-- Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header text-center">
+                <h4><i class="fas fa-user-plus"></i> Create an Account</h4>
+            </div>
+            <div class="card-body">
+                <div id="signup-error" class="alert alert-danger d-none"></div>
+                
+                <!-- Email/Password Form -->
+                <form id="signup-form">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" required minlength="6">
+                        <small class="text-muted">Password must be at least 6 characters long</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password-confirm" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="password-confirm" required minlength="6">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center my-3">
+                    <span class="text-muted">OR</span>
+                </div>
+                
+                <!-- Google Sign In Button -->
+                <div class="d-grid gap-2">
+                    <button id="google-signup" class="btn btn-outline-danger">
+                        <i class="fab fa-google"></i> Sign Up with Google
+                    </button>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <p>Already have an account? <a href="{{ url_for('auth.login_page') }}">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Auth JS -->
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "{{ firebase_api_key }}",
+        authDomain: "{{ firebase_auth_domain }}",
+        projectId: "{{ firebase_project_id }}",
+        appId: "{{ firebase_app_id }}"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // Firebase auth
+    const auth = firebase.auth();
+    
+    // Google auth provider
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const signupForm = document.getElementById('signup-form');
+        const googleSignup = document.getElementById('google-signup');
+        const signupError = document.getElementById('signup-error');
+        
+        // Email/Password signup
+        signupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password-confirm').value;
+            
+            if (password !== passwordConfirm) {
+                signupError.textContent = 'Passwords do not match';
+                signupError.classList.remove('d-none');
+                return;
+            }
+            
+            try {
+                signupError.classList.add('d-none');
+                
+                // Create user with email and password
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile with name
+                if (name) {
+                    await user.updateProfile({
+                        displayName: name
+                    });
+                }
+                
+                // Get ID token
+                const idToken = await user.getIdToken();
+                
+                // Send token to backend
+                const response = await fetch('/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: idToken })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    throw new Error(data.error || 'Failed to authenticate with server');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                signupError.textContent = error.message;
+                signupError.classList.remove('d-none');
+            }
+        });
+        
+        // Google sign up
+        googleSignup.addEventListener('click', async function() {
+            try {
+                signupError.classList.add('d-none');
+                
+                // Sign in with Google
+                const result = await auth.signInWithPopup(googleProvider);
+                const user = result.user;
+                
+                // Get ID token
+                const idToken = await user.getIdToken();
+                
+                // Send token to backend
+                const response = await fetch('/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: idToken })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    throw new Error(data.error || 'Failed to authenticate with server');
+                }
+            } catch (error) {
+                console.error('Google sign up error:', error);
+                signupError.textContent = error.message;
+                signupError.classList.remove('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}
